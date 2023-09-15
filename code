@@ -1,0 +1,298 @@
+import pygame
+import random
+import requests
+from pygame.locals import *
+
+pygame.init()
+
+screen = pygame.display.set_mode((800, 500))
+pygame.display.set_caption('NBA Higher or Lower')
+
+url_23 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2022-23&SeasonType=Regular%20Season&StatCategory=PTS"
+url_22 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2021-22&SeasonType=Regular%20Season&StatCategory=PTS"
+url_21 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2020-21&SeasonType=Regular%20Season&StatCategory=PTS"
+url_20 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2019-20&SeasonType=Regular%20Season&StatCategory=PTS"
+url_19 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2018-19&SeasonType=Regular%20Season&StatCategory=PTS"
+url_18 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2017-18&SeasonType=Regular%20Season&StatCategory=PTS"
+url_17 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2016-17&SeasonType=Regular%20Season&StatCategory=PTS"
+url_16 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2015-16&SeasonType=Regular%20Season&StatCategory=PTS"
+url_15 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2014-15&SeasonType=Regular%20Season&StatCategory=PTS"
+url_14 = "https://stats.nba.com/stats/leagueLeaders?LeagueID=00&PerMode=PerGame&Scope=S&Season=2013-14&SeasonType=Regular%20Season&StatCategory=PTS"
+
+
+url = [url_23, url_22, url_21, url_20, url_19, url_18, url_17, url_16, url_15, url_14]
+
+r_list = []
+data_list = []
+
+for i in url:
+    r_list.append(requests.get(url=i).json()) 
+
+for n in range(10):
+    data_list.append(r_list[n]['resultSet']['rowSet'])
+
+name_list = []
+ppg_list = []
+
+class Button():
+    def __init__(self, x, y, image, scale):
+        width = image.get_width()
+        height = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width*scale), int(height*scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+
+    def draw(self):
+        action = False
+        pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
+                self.clicked = True
+                action = True
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+        return action
+
+rectangle = pygame.image.load('rectangle.png').convert_alpha()
+background = pygame.image.load('background.jpg').convert_alpha()
+higher_button = Button(100, 300, rectangle, 1)
+lower_button = Button(500, 300, rectangle, 1)
+next_button = Button(300, 400, rectangle, 1)
+again_button = Button(100, 400, rectangle, 1)
+exit_button = Button(500, 400, rectangle, 1)
+return_button = Button(300, 38, rectangle, 1)
+button_23 = Button(25, 350, rectangle, 0.75)
+button_22 = Button(175, 350, rectangle, 0.75)
+button_21 = Button(325, 350, rectangle, 0.75)
+button_20 = Button(475, 350, rectangle, 0.75)
+button_19 = Button(625, 350, rectangle, 0.75)
+button_18 = Button(25, 400, rectangle, 0.75)
+button_17 = Button(175, 400, rectangle, 0.75)
+button_16 = Button(325, 400, rectangle, 0.75)
+button_15 = Button(475, 400, rectangle, 0.75)
+button_14 = Button(625, 400, rectangle, 0.75)
+background = Button(0,0,background,1)
+
+font_1 = pygame.font.SysFont('artifaktelementblack', 28)
+font_2 = pygame.font.SysFont('artifaktelementblack', 36)
+font_3 = pygame.font.SysFont('artifaktelementblack', 20)
+
+
+def draw_text(text, font, color, x, y):
+    img = font.render(text, True, color)
+    screen.blit(img, (x, y))
+
+def text_on_screen(n_1, n_2):
+    draw_text(f"{name_list[n_1]}'s ppg: {str(ppg_list[n_1])}", font_1, (0, 0, 0), 50, 140)
+    draw_text(f"Is {name_list[n_2]}'s ppg higher or lower?", font_1, (0, 0, 0), 50, 215)
+    draw_text(f"Score: {user_points}", font_1, (0, 0, 0), 50, 50)
+    draw_text(f"Strikes: {strikes}", font_1, (0,0,0), 600, 50)
+
+def evaluate_answer(user_answer, correct_answer):
+    if user_answer is not None:
+        if user_answer == correct_answer:
+            return True
+    return False
+
+def reset_game():
+    global name_list, ppg_list, user_points, strikes, user_answer, n_1, n_2, correct_answer, result, show_text, intro
+
+    name_list = []
+    ppg_list = []
+    user_points = 0
+    strikes = 0
+    user_answer = None
+    n_1 = None
+    n_2 = None
+    correct_answer = None
+    result = None
+    show_text = False
+    intro = True
+    year = None
+    
+def setup_game(year):
+    global name_list, ppg_list, user_points, strikes, user_answer, n_1, n_2, show_text, intro, result, ppg_1, ppg_2, correct_answer
+    
+    for i in data_list[year]:
+        name_list.append(i[2])
+        ppg_list.append(i[-2])
+    user_points = 0
+    strikes = 0
+    user_answer = None
+    n_1 = random.randint(0, len(ppg_list) - 1)
+    n_2 = random.randint(0, len(ppg_list) - 1)
+    if n_1 == n_2:
+        n_2 = random.randint(0, len(ppg_list) - 1)
+    show_text = True
+    intro = False
+    result = None
+
+    ppg_1 = ppg_list[n_1]
+    ppg_2 = ppg_list[n_2]
+
+    if ppg_1 > ppg_2:
+        correct_answer = 'lower'
+    elif ppg_1 < ppg_2:
+        correct_answer = 'higher'
+    else:
+        correct_answer = user_answer
+
+user_points = 0
+strikes = 0
+user_answer = 'x'
+correct_answer = None
+clicked = False
+show_text = False
+intro = True
+result = None
+
+running = True
+while running:
+    screen.fill((255,255,255))
+    background.draw()
+    
+    if intro:
+        draw_text("Welcome to NBA Higher or Lower!", font_2, (0,0,0), 100, 100)
+        draw_text("Select a season to play", font_1, (0,0,0), 250, 200)
+        draw_text("2022-23", font_3, (0,0,0), 62, 360)
+        draw_text("2021-22", font_3, (0,0,0), 212, 360)
+        draw_text("2020-21", font_3, (0,0,0), 362, 360)
+        draw_text("2019-20", font_3, (0,0,0), 512, 360)
+        draw_text("2018-19", font_3, (0,0,0), 662, 360)
+        draw_text("2017-18", font_3, (0,0,0), 62, 410)
+        draw_text("2016-17", font_3, (0,0,0), 212, 410)
+        draw_text("2015-16", font_3, (0,0,0), 362, 410)
+        draw_text("2014-15", font_3, (0,0,0), 512, 410)
+        draw_text("2013-14", font_3, (0,0,0), 662, 410)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+
+            if higher_button.rect.collidepoint(pos) and user_answer is None:
+                user_answer = 'higher'
+                if evaluate_answer(user_answer, correct_answer):
+                    result = "Correct!"
+                    user_points += 1
+                elif evaluate_answer(user_answer, correct_answer) == False and strikes == 2:
+                    strikes += 1
+                else:
+                    result = "Incorrect!"
+                    strikes += 1
+                show_text = False
+
+            if lower_button.rect.collidepoint(pos) and user_answer is None:
+                user_answer = 'lower'
+                if evaluate_answer(user_answer, correct_answer):
+                    result = "Correct!"
+                    user_points += 1
+                elif evaluate_answer(user_answer, correct_answer) == False and strikes == 2:
+                    strikes += 1
+                else:
+                    result = "Incorrect!"
+                    strikes += 1
+                show_text = False
+
+            if next_button.rect.collidepoint(pos) and user_answer is not None and intro == False:
+                if strikes != 3:
+                    user_answer = None
+                    n_1 = n_2
+                    n_2 = random.randint(0, len(ppg_list) - 1)
+                    if n_1 == n_2:
+                        n_2 = random.randint(0, len(ppg_list) - 1)
+                    correct_answer = 'lower' if ppg_list[n_1] > ppg_list[n_2] else 'higher'
+                    show_text = True
+                    intro = False
+                    result = None
+                    
+            if exit_button.rect.collidepoint(pos) and strikes == 3:
+                running = False
+                
+            if button_23.rect.collidepoint(pos) and intro:
+                year = 0
+                setup_game(year)
+                
+            if button_22.rect.collidepoint(pos) and intro:
+                year = 1
+                setup_game(year)
+            
+            if button_21.rect.collidepoint(pos) and intro:
+                year = 2
+                setup_game(year)
+                
+            if button_20.rect.collidepoint(pos) and intro:
+                year = 3
+                setup_game(year)
+                
+            if button_19.rect.collidepoint(pos) and intro:
+                year = 4
+                setup_game(year)
+                
+            if button_18.rect.collidepoint(pos) and intro:
+                year = 5
+                setup_game(year)
+            
+            if button_17.rect.collidepoint(pos) and intro:
+                year = 6
+                setup_game(year)
+                
+            if button_16.rect.collidepoint(pos) and intro:
+                year = 7
+                setup_game(year)
+                
+            if button_15.rect.collidepoint(pos) and intro:
+                year = 8
+                setup_game(year)
+                
+            if button_14.rect.collidepoint(pos) and intro:
+                year = 9
+                setup_game(year)
+                
+    if show_text:
+        text_on_screen(n_1, n_2)
+        higher_button.draw()
+        lower_button.draw()
+        return_button.draw()
+        draw_text("Higher", font_1, (0, 0, 0), 155, 310)
+        draw_text("Lower", font_1, (0, 0, 0), 555, 310)
+        draw_text("Return", font_1, (0 ,0 ,0), 355, 50)
+        if return_button.clicked:
+            reset_game()
+            return_button.clicked = False
+    elif show_text == False and result != None:
+        draw_text(result, font_1, (0,0,0), 335, 200)
+        
+    if strikes == 3:
+        draw_text(f"Score: {user_points}", font_1, (0,0,0), 340, 140)
+        draw_text("Thanks for playing!", font_1, (0,0,0), 265, 215)
+        draw_text("Play Again", font_1, (0, 0, 0), 130, 412)
+        draw_text("Exit", font_1, (0, 0, 0), 570, 412)
+        again_button.draw()
+        exit_button.draw()
+        if again_button.clicked:
+            reset_game()
+            again_button.clicked = False
+    elif intro:
+        button_23.draw()
+        button_22.draw()
+        button_21.draw()
+        button_20.draw()
+        button_19.draw()
+        button_18.draw()
+        button_17.draw()
+        button_16.draw()
+        button_15.draw()
+        button_14.draw()
+    elif intro == False:
+        draw_text("Next", font_1, (0, 0, 0), 365, 412)
+        next_button.draw()
+
+    pygame.display.update()
+
+pygame.quit()
+
